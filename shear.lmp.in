@@ -1,12 +1,15 @@
+variable run_temp equal 0.7
+
+#################################
+
 units		lj 
 atom_style	atomic 
 atom_modify	map array 
 
-variable run_temp equal 0.7
 
 # read interactions
 pair_style	morse 1.4 
-read_data morse_input_phi0.1592.lmp	
+read_data ${file_name}	
 pair_modify	shift yes
 
 minimize 	1e-7 1e-7 1000 1000
@@ -18,8 +21,6 @@ variable L equal xhi-xlo
 print "Box size $L"
 
 timestep 0.001
-variable Amplitude equal 0.1*$L
-variable Period equal 100
 
 fix quench all nvt temp 1 ${run_temp} 1
 run 1000
@@ -29,7 +30,7 @@ dump 		dumpatom  all atom 1000 shear-dump.atom.gz
 dump_modify	dumpatom sort id first yes
 
 fix equilibrate all nvt temp ${run_temp} ${run_temp} 1
-run 10
+run 10000
 unfix equilibrate
 
 variable sigmaxy equal -pxy
@@ -38,8 +39,8 @@ variable damp equal 1.0         # Damping parameter
 variable dt equal 0.0083        # Timestep of integration
 variable Ly equal 5             # Magnitude of the shear
 
-thermo 1000
-thermo_style custom step temp xy etotal
+thermo 1
+thermo_style custom step temp pxy xy etotal
 
 fix 1 all nve
 # Every step deform the box by v_deform amount at rate v_rate. 

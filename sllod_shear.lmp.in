@@ -1,0 +1,37 @@
+units		lj 
+atom_style	atomic 
+atom_modify	map array 
+
+# read interactions
+pair_style	morse 1.4 
+read_data ${file_name}	
+pair_modify	shift yes
+
+minimize 	1e-7 1e-7 1000 1000
+
+change_box all triclinic
+velocity all create 1 1234
+
+variable L equal xhi-xlo
+print "Box size $L"
+variable Amplitude equal 0.1*$L
+variable Period equal 100
+
+timestep 0.001
+
+fix 1 all nvt/sllod temp 1 1 1.0
+
+fix 2 all deform 1  xy wiggle ${Amplitude} ${Period} remap v
+
+dump 		dumpatom  all atom 5000 shear-dump.atom.gz
+dump_modify	dumpatom sort id first yes
+dump		dumpxyz	all xyz 50000  shear.xyz
+dump_modify dumpxyz element A A A A A A A first yes
+
+
+thermo 500
+thermo_style custom step temp xy xz yz
+reset_timestep 0
+run 100000
+
+
