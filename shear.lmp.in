@@ -1,0 +1,58 @@
+units		lj 
+atom_style	atomic 
+atom_modify	map array 
+
+variable run_temp equal 0.7
+
+# read interactions
+pair_style	morse 1.4 
+read_data morse_input_phi0.1592.lmp	
+pair_modify	shift yes
+
+minimize 	1e-7 1e-7 1000 1000
+
+change_box all triclinic
+velocity all create 1 1234
+
+variable L equal xhi-xlo
+print "Box size $L"
+
+timestep 0.001
+variable Amplitude equal 0.1*$L
+variable Period equal 100
+
+fix quench all nvt temp 1 ${run_temp} 1
+run 1000
+unfix quench
+
+dump 		dumpatom  all atom 1000 shear-dump.atom.gz
+dump_modify	dumpatom sort id first yes
+
+fix equilibrate all nvt temp ${run_temp} ${run_temp} 1
+run 10
+unfix equilibrate
+
+variable sigmaxy equal -pxy
+variable sigma0 equal 0.01      # Target stress
+variable damp equal 1.0         # Damping parameter
+variable dt equal 0.0083        # Timestep of integration
+variable Ly equal 5             # Magnitude of the shear
+
+thermo 1000
+thermo_style custom step temp xy etotal
+
+fix 1 all nve
+# Every step deform the box by v_deform amount at rate v_rate. 
+fix 2 all deform 1 xy variable v_deform v_rate remap x
+
+variable deform equal f_oldrate*${dt}+f_old_deform
+variable rate equal f_oldrate+${damp}*(${sigma0}-v_sigmaxy)*${dt}*${Ly}
+
+# Compute the deform and rate variables every step
+fix     old_deform all ave/time 1 1 1 v_deform
+fix     oldrate all ave/time 1 1 1 v_rate
+
+reset_timestep 0
+run 500000
+
+
