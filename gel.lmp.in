@@ -1,0 +1,34 @@
+variable run_temp equal 1
+
+#################################
+
+units		lj 
+atom_style	atomic 
+atom_modify	map array 
+
+# read interactions
+pair_style	morse 1.4 
+read_data ${file_name}	
+pair_modify	shift yes
+
+minimize 	1e-10 1e-10 3000 3000
+
+change_box all triclinic
+velocity all create 1 1234
+
+variable L equal xhi-xlo
+print "Box size $L"
+
+timestep 0.001
+
+fix quench all nvt temp 1 ${run_temp} 1
+run 10000
+unfix quench
+
+dump 		dumpatom  all atom 1000 shear-dump.atom.gz
+dump_modify	dumpatom sort id first yes
+
+fix equilibrate all nvt temp ${run_temp} ${run_temp} 1
+run 100000
+unfix equilibrate
+

@@ -3,9 +3,10 @@
 
 import numpy as np
 from scipy.stats import norm
+import sys
 
-epsilon = 4                     # float(sys.argv[1])    # Morse well depth
-number_density = 0.3            # float(sys.argv[2])
+epsilon = float(sys.argv[1])    # Morse well depth
+number_density =  float(sys.argv[2])
 rho0 = 33                      # Morse interaction distance
 r_cut_coeff = 1.4               # Morse cutoff
 pd = 0.04                       # Polyidpseristy gaussian
