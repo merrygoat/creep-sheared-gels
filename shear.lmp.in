@@ -1,6 +1,5 @@
-variable run_temp equal 0.6
-
-#################################
+#Leave this at 1 since beta epsilon is then the morse well depth
+variable run_temp equal 1
 
 units		lj 
 atom_style	atomic 
@@ -8,9 +7,11 @@ atom_modify	map array
 
 
 # read interactions
-pair_style	morse 1.4 
+pair_style	hybrid/overlay morse 1.4 dpd/tstat 1.0 1.0 2.5 34387
 read_data ${file_name}	
+pair_coeff * * dpd/tstat 100 1
 pair_modify	shift yes
+comm_modify vel yes
 
 minimize 	1e-10 1e-10 3000 3000
 
@@ -22,12 +23,17 @@ print "Box size $L"
 
 timestep 0.001
 
-fix quench all nvt temp 1 ${run_temp} 1
-run 10000
-unfix quench
-
 dump 		dumpatom  all atom 1000 shear-dump.atom.gz
 dump_modify	dumpatom sort id first yes
+
+region bottom block INF INF INF 4 INF INF
+region top block INF INF 16 INF INF INF
+
+group bottom_group region bottom
+group top_group region top
+
+compute bottom_temp bottom_group temp
+compute top_temp top_group temp
 
 fix equilibrate all nvt temp ${run_temp} ${run_temp} 1
 run 100000
@@ -57,7 +63,7 @@ fix     old_deform all ave/time 1 1 1 v_deform
 fix     oldrate all ave/time 1 1 1 v_rate
 
 thermo 1000
-thermo_style custom step temp pxy xy etotal v_rate
+thermo_style custom step temp c_deform_temp c_top_temp c_bottom_temp pxy xy etotal v_rate
 
 run 100000
 
