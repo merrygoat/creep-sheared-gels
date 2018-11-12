@@ -10,9 +10,10 @@ number_density =  float(sys.argv[2])
 rho0 = 33                      # Morse interaction distance
 r_cut_coeff = 1.4               # Morse cutoff
 pd = 0.04                       # Polyidpseristy gaussian
-num_particles = 1000
+num_particles = 100000
 box_volume = num_particles/number_density
 side_len = box_volume ** (1/3)
+dpd_thermostat = True            # If turned on, will add "Morse" to the interaction potential to allow use of the hybrid/overlay style
 
 # Set up the particle diameters
 num_types = 7
@@ -59,6 +60,12 @@ with open(filename, 'w') as ouptut_file:
         ouptut_file.write("%d %g\n" % (i + 1, np.pi / 6 * bin_centers[i] ** 3))
     ouptut_file.write("\n")
 
+    # If the hybrid/overlay command is used, need to specify the type of the potential
+    if dpd_thermostat:
+        keyword = " Morse "
+    else:
+        keyword = ""
+
     # Specify the interaction coefficient for the Morse potential:
     # in lammps's documentation they are: d0 alpha r0 cutoff
     ouptut_file.write("PairIJ Coeffs\n\n")
@@ -67,7 +74,7 @@ with open(filename, 'w') as ouptut_file:
             diam_i = bin_centers[type_1]
             diam_j = bin_centers[type_2]
             mixed_diam = 0.5 * (diam_i + diam_j)
-            ouptut_file.write("%d %d %g %g %g %g\n" % (type_1 + 1, type_2 + 1, epsilon, rho0, mixed_diam, r_cut_coeff * mixed_diam))
+            ouptut_file.write("%d %d%s%g %g %g %g\n" % (type_1 + 1, type_2 + 1, keyword, epsilon, rho0, mixed_diam, r_cut_coeff * mixed_diam))
 
     # Write coordinates
     ouptut_file.write("\nAtoms\n\n")

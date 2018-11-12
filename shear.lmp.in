@@ -23,21 +23,19 @@ print "Box size $L"
 
 timestep 0.001
 
-dump 		dumpatom  all atom 1000 shear-dump.atom.gz
+dump 		dumpatom  all atom 500 shear-dump.atom.gz
 dump_modify	dumpatom sort id first yes
 
-region bottom block INF INF INF 4 INF INF
-region top block INF INF 16 INF INF INF
+thermo 1000
+thermo_style custom step temp c_deform_temp press pxy xy pe v_rate
 
-group bottom_group region bottom
-group top_group region top
-
-compute bottom_temp bottom_group temp
-compute top_temp top_group temp
+## Do Equilibration
 
 fix equilibrate all nvt temp ${run_temp} ${run_temp} 1
 run 100000
 unfix equilibrate
+
+## Set up Shear
 
 compute		deform_temp all temp/deform
 compute		deform_pressure all pressure deform_temp
@@ -62,8 +60,7 @@ variable rate equal f_oldrate+${damp}*(${sigma0}-v_sigmaxy)*${dt}*${Ly}
 fix     old_deform all ave/time 1 1 1 v_deform
 fix     oldrate all ave/time 1 1 1 v_rate
 
-thermo 1000
-thermo_style custom step temp c_deform_temp c_top_temp c_bottom_temp pxy xy etotal v_rate
+## Do production
 
 run 100000
 
