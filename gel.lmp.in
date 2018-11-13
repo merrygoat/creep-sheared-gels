@@ -1,5 +1,10 @@
 #Leave this at 1 since beta epsilon is then the morse well depth
 variable run_temp equal 1
+variable run_steps equal 3000000
+variable num_dump_steps equal 100
+
+variable dump_frequency equal ${run_steps}/${num_dump_steps}
+
 
 units		lj 
 atom_style	atomic 
@@ -23,7 +28,7 @@ print "Box size $L"
 
 timestep 0.001
 
-dump 		dumpatom  all atom 30000 shear-dump.atom.gz
+dump 		dumpatom  all atom ${dump_frequency} shear-dump.atom.gz
 dump_modify	dumpatom sort id first yes
 
 thermo 1000
@@ -32,7 +37,7 @@ thermo_style custom step temp c_deform_temp press pxy xy pe v_rate
 ## Do Equilibration
 
 fix equilibrate all nvt temp ${run_temp} ${run_temp} 1
-run 3000000
+run ${run_steps}
 unfix equilibrate
 
-write_restart equil_3000000.restart
+write_restart equil_{run_steps}.restart
