@@ -1,26 +1,20 @@
 #Leave this at 1 since beta epsilon is then the morse well depth
 variable run_temp equal 1
+variable run_steps equal 10000
+variable dump_frames equal 100
 
+variable dump_frequency equal ${run_steps}/${dump_frames}
+variable thermo_frequency equal ${run_steps}/1000
 
 # read restart file
-read_restart ${file_name}	
-
-
-timestep 0.001
-
-dump 		dumpatom  all atom 500 shear-dump.atom.gz
-dump_modify	dumpatom sort id first yes
-
-thermo 1000
-thermo_style custom step temp c_deform_temp press pxy xy pe v_rate
+read_restart equil_*.restart
 
 ## Set up Shear
 
 compute		deform_temp all temp/deform
 compute		deform_pressure all pressure deform_temp
-reset_timestep 0
 
-run 0
+#run 0
 
 variable sigmaxy equal  -c_deform_pressure[4] #Get the xy stress
 variable sigma0 equal 0.0001      # Target stress
@@ -39,8 +33,14 @@ variable rate equal f_oldrate+${damp}*(${sigma0}-v_sigmaxy)*${dt}*${Ly}
 fix     old_deform all ave/time 1 1 1 v_deform
 fix     oldrate all ave/time 1 1 1 v_rate
 
+thermo ${thermo_frequency}
+thermo_style custom step temp c_deform_temp press pxy xy pe v_rate
+
+dump 		dumpatom  all atom ${dump_frequency} shear-dump.atom.gz
+dump_modify	dumpatom sort id first yes
+
 ## Do production
 
-run 100000
+run ${run_steps}
 
 
