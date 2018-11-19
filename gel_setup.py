@@ -10,7 +10,7 @@ number_density =  float(sys.argv[2])
 rho0 = 33                      # Morse interaction distance
 r_cut_coeff = 1.4               # Morse cutoff
 pd = 0.04                       # Polyidpseristy gaussian
-num_particles = 100000
+num_particles = 1000
 box_volume = num_particles/number_density
 side_len = box_volume ** (1/3)
 dpd_thermostat = True            # If turned on, will add "Morse" to the interaction potential to allow use of the hybrid/overlay style
@@ -62,7 +62,7 @@ with open(filename, 'w') as ouptut_file:
 
     # If the hybrid/overlay command is used, need to specify the type of the potential
     if dpd_thermostat:
-        keyword = " Morse "
+        keyword = " morse "
     else:
         keyword = ""
 

@@ -46,7 +46,7 @@ pair_coeff 7 7 morse 4 33 1.12 1.568
 compute		deform_temp all temp/deform
 compute		deform_pressure all pressure deform_temp
 
-#run 0
+reset_timestep 0
 
 variable sigmaxy equal  -c_deform_pressure[4] #Get the xy stress
 variable sigma0 equal 0.0001      # Target stress
@@ -64,6 +64,28 @@ variable rate equal f_oldrate+${damp}*(${sigma0}-v_sigmaxy)*${dt}*${Ly}
 # Compute the deform and rate variables every step
 fix     old_deform all ave/time 1 1 1 v_deform
 fix     oldrate all ave/time 1 1 1 v_rate
+
+variable varstep equal step
+variable vartemp equal temp
+variable varpress equal press
+variable varetotal equal etotal
+variable vardeformtemp equal c_deform_temp
+variable varpxy equal pxy
+variable varx equal lx
+variable vary equal ly
+variable varz equal lz
+variable varxy equal xy
+variable varxz equal xz
+variable varyz equal yz
+
+
+# Print file with thermodynamic quantities
+print 		"step temperature corrected_temperature pressure xy_pressure xy_box_tilt total_energy shear_rate" file gel_shear_${run_steps}.thermo
+fix 		thermo_print all print ${thermo_frequency} "${varstep} ${vartemp} ${vardeformtemp} ${varpress} ${varpxy} ${varxy} ${varetotal} ${rate}" append gel_shear_${run_steps}.thermo
+
+# Print file with box dimensions for TCC
+print		"x y z xy xz yz" file box.txt
+fix		 	box_print all print ${dump_frequency} "${varx} ${vary} ${varz} ${varxy} ${varxz} ${varyz}" append box.txt
 
 thermo ${thermo_frequency}
 thermo_style custom step temp c_deform_temp press pxy xy pe v_rate

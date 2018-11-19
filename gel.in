@@ -1,6 +1,6 @@
 #Leave this at 1 since beta epsilon is then the morse well depth
 variable run_temp equal 1
-variable run_steps equal 10000
+variable run_steps equal 100000
 variable dump_frames equal 100
 
 variable dump_frequency equal ${run_steps}/${dump_frames}
@@ -27,8 +27,15 @@ print "Box size $L"
 
 timestep 0.001
 
-dump 		dumpatom  all atom ${dump_frequency} shear-dump.atom.gz
+dump 		dumpatom  all atom ${dump_frequency} gel_equil.atom.gz
 dump_modify	dumpatom sort id first yes
+
+variable varstep equal step
+variable vartemp equal temp
+variable varpress equal press
+variable varetotal equal etotal
+
+fix thermo_print 	all print ${thermo_frequency} "${varstep} ${vartemp} ${varpress} ${varetotal}" file gel_equil_${run_steps}.thermo
 
 thermo ${thermo_frequency}
 thermo_style custom step temp press pe
