@@ -1,6 +1,6 @@
 #Leave this at 1 since beta epsilon is then the morse well depth
 variable run_temp equal 1
-variable run_steps equal 10000
+variable run_steps equal 100000
 variable dump_frames equal 100
 
 variable dump_frequency equal ${run_steps}/${dump_frames}
@@ -49,7 +49,7 @@ compute		deform_pressure all pressure deform_temp
 reset_timestep 0
 
 variable sigmaxy equal  -c_deform_pressure[4] #Get the xy stress
-variable sigma0 equal 0.0001      # Target stress
+variable sigma0 equal 0.1      # Target stress
 variable damp equal 1.0         # Damping parameter
 variable dt equal 0.0083        # Timestep of integration
 variable Ly equal 5             # Magnitude of the shear
@@ -80,17 +80,15 @@ variable varyz equal yz
 
 
 # Print file with thermodynamic quantities
-print 		"step temperature corrected_temperature pressure xy_pressure xy_box_tilt total_energy shear_rate" file gel_shear_${run_steps}.thermo
-fix 		thermo_print all print ${thermo_frequency} "${varstep} ${vartemp} ${vardeformtemp} ${varpress} ${varpxy} ${varxy} ${varetotal} ${rate}" append gel_shear_${run_steps}.thermo
+fix 		thermo_print all print ${thermo_frequency} "${varstep} ${vartemp} ${vardeformtemp} ${varpress} ${varpxy} ${varxy} ${varetotal} ${rate}" append gel_stress_${sigma0}_steps_${run_steps}.thermo title "step temperature corrected_temperature pressure xy_pressure xy_box_tilt total_energy shear_rate"
 
 # Print file with box dimensions for TCC
-print		"x y z xy xz yz" file box.txt
-fix		 	box_print all print ${dump_frequency} "${varx} ${vary} ${varz} ${varxy} ${varxz} ${varyz}" append box.txt
+fix		 	box_print all print ${dump_frequency} "${varx} ${vary} ${varz} ${varxy} ${varxz} ${varyz}" file box.txt title "x y z xy xz yz"
 
 thermo ${thermo_frequency}
 thermo_style custom step temp c_deform_temp press pxy xy pe v_rate
 
-dump 		dumpatom  all atom ${dump_frequency} shear-dump.atom.gz
+dump 		dumpatom  all atom ${dump_frequency} gel_stress_${sigma0}_steps_${run_steps}.gz
 dump_modify	dumpatom sort id first yes
 
 ## Do production
