@@ -1,6 +1,6 @@
 #Leave this at 1 since beta epsilon is then the morse well depth
 variable run_temp equal 1
-variable run_steps equal 100000
+variable run_steps equal 1000000
 variable dump_frames equal 100
 
 variable dump_frequency equal ${run_steps}/${dump_frames}
@@ -12,34 +12,34 @@ read_restart equil_*.restart
 pair_coeff * * dpd/tstat 100 1
 pair_modify	shift yes
 comm_modify vel yes
-pair_coeff 1 1 morse 4 33 0.88 1.232
-pair_coeff 1 2 morse 4 33 0.9 1.26
-pair_coeff 1 3 morse 4 33 0.92 1.288
-pair_coeff 1 4 morse 4 33 0.94 1.316
-pair_coeff 1 5 morse 4 33 0.96 1.344
-pair_coeff 1 6 morse 4 33 0.98 1.372
-pair_coeff 1 7 morse 4 33 1 1.4
-pair_coeff 2 2 morse 4 33 0.92 1.288
-pair_coeff 2 3 morse 4 33 0.94 1.316
-pair_coeff 2 4 morse 4 33 0.96 1.344
-pair_coeff 2 5 morse 4 33 0.98 1.372
-pair_coeff 2 6 morse 4 33 1 1.4
-pair_coeff 2 7 morse 4 33 1.02 1.428
-pair_coeff 3 3 morse 4 33 0.96 1.344
-pair_coeff 3 4 morse 4 33 0.98 1.372
-pair_coeff 3 5 morse 4 33 1 1.4
-pair_coeff 3 6 morse 4 33 1.02 1.428
-pair_coeff 3 7 morse 4 33 1.04 1.456
-pair_coeff 4 4 morse 4 33 1 1.4
-pair_coeff 4 5 morse 4 33 1.02 1.428
-pair_coeff 4 6 morse 4 33 1.04 1.456
-pair_coeff 4 7 morse 4 33 1.06 1.484
-pair_coeff 5 5 morse 4 33 1.04 1.456
-pair_coeff 5 6 morse 4 33 1.06 1.484
-pair_coeff 5 7 morse 4 33 1.08 1.512
-pair_coeff 6 6 morse 4 33 1.08 1.512
-pair_coeff 6 7 morse 4 33 1.1 1.54
-pair_coeff 7 7 morse 4 33 1.12 1.568
+pair_coeff 1 1 morse 2 33 0.88 1.232
+pair_coeff 1 2 morse 2 33 0.9 1.26
+pair_coeff 1 3 morse 2 33 0.92 1.288
+pair_coeff 1 4 morse 2 33 0.94 1.316
+pair_coeff 1 5 morse 2 33 0.96 1.344
+pair_coeff 1 6 morse 2 33 0.98 1.372
+pair_coeff 1 7 morse 2 33 1 1.4
+pair_coeff 2 2 morse 2 33 0.92 1.288
+pair_coeff 2 3 morse 2 33 0.94 1.316
+pair_coeff 2 4 morse 2 33 0.96 1.344
+pair_coeff 2 5 morse 2 33 0.98 1.372
+pair_coeff 2 6 morse 2 33 1 1.4
+pair_coeff 2 7 morse 2 33 1.02 1.428
+pair_coeff 3 3 morse 2 33 0.96 1.344
+pair_coeff 3 4 morse 2 33 0.98 1.372
+pair_coeff 3 5 morse 2 33 1 1.4
+pair_coeff 3 6 morse 2 33 1.02 1.428
+pair_coeff 3 7 morse 2 33 1.04 1.456
+pair_coeff 4 4 morse 2 33 1 1.4
+pair_coeff 4 5 morse 2 33 1.02 1.428
+pair_coeff 4 6 morse 2 33 1.04 1.456
+pair_coeff 4 7 morse 2 33 1.06 1.484
+pair_coeff 5 5 morse 2 33 1.04 1.456
+pair_coeff 5 6 morse 2 33 1.06 1.484
+pair_coeff 5 7 morse 2 33 1.08 1.512
+pair_coeff 6 6 morse 2 33 1.08 1.512
+pair_coeff 6 7 morse 2 33 1.1 1.54
+pair_coeff 7 7 morse 2 33 1.12 1.568
 
 ## Set up Shear
 
@@ -50,16 +50,14 @@ reset_timestep 0
 
 variable sigmaxy equal  -c_deform_pressure[4] #Get the xy stress
 variable sigma0 equal 0.1      # Target stress
-variable damp equal 1.0         # Damping parameter
-variable dt equal 0.0083        # Timestep of integration
-variable Ly equal 5             # Magnitude of the shear
+variable damp equal 0.001        # Damping parameter
 
 fix 1 all nve
 # Every step deform the box by v_deform amount at rate v_rate. 
 fix 2 all deform 1 xy variable v_deform v_rate remap x
 
-variable deform equal f_oldrate*${dt}+f_old_deform
-variable rate equal f_oldrate+${damp}*(${sigma0}-v_sigmaxy)*${dt}*${Ly}
+variable deform equal f_oldrate*dt+f_old_deform
+variable rate equal f_oldrate+${damp}*(${sigma0}-v_sigmaxy)*dt*ly
 
 # Compute the deform and rate variables every step
 fix     old_deform all ave/time 1 1 1 v_deform
@@ -80,10 +78,10 @@ variable varyz equal yz
 
 
 # Print file with thermodynamic quantities
-fix 		thermo_print all print ${thermo_frequency} "${varstep} ${vartemp} ${vardeformtemp} ${varpress} ${varpxy} ${varxy} ${varetotal} ${rate}" append gel_stress_${sigma0}_steps_${run_steps}.thermo title "step temperature corrected_temperature pressure xy_pressure xy_box_tilt total_energy shear_rate"
+fix 		thermo_print all print ${thermo_frequency} "${varstep} ${vartemp} ${vardeformtemp} ${varpress} ${sigmaxy} ${varpxy} ${varxy} ${varetotal} ${rate}" append gel_stress_${sigma0}_damp_${damp}_steps_${run_steps}.thermo title "step temperature corrected_temperature pressure xy_stress xy_pressure xy_box_tilt total_energy shear_rate" screen no
 
 # Print file with box dimensions for TCC
-fix		 	box_print all print ${dump_frequency} "${varx} ${vary} ${varz} ${varxy} ${varxz} ${varyz}" file box.txt title "x y z xy xz yz"
+fix		 	box_print all print ${dump_frequency} "${varx} ${vary} ${varz} ${varxy} ${varxz} ${varyz}" file box.txt title "x y z xy xz yz" screen no
 
 thermo ${thermo_frequency}
 thermo_style custom step temp c_deform_temp press pxy xy pe v_rate
