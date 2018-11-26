@@ -50,8 +50,8 @@ compute		deform_pressure all pressure deform_temp
 reset_timestep 0
 
 variable sigmaxy equal  -c_deform_pressure[4] #Get the xy stress
-variable sigma0 equal 0.1      # Target stress
-variable damp equal 0.001        # Damping parameter
+variable sigma0 equal 1.5     # Target stress
+variable damp equal 0.01        # Damping parameter
 
 fix 1 all nve
 # Every step deform the box by v_deform amount at rate v_rate. 
@@ -76,10 +76,11 @@ variable varz equal lz
 variable varxy equal xy
 variable varxz equal xz
 variable varyz equal yz
+variable varxystrain equal xy/ly
 
 
 # Print file with thermodynamic quantities
-fix 		thermo_print all print ${thermo_frequency} "${varstep} ${vartemp} ${vardeformtemp} ${varpress} ${sigmaxy} ${varpxy} ${varxy} ${varetotal} ${rate}" append gel_stress_${sigma0}_damp_${damp}_steps_${run_steps}.thermo title "step temperature corrected_temperature pressure xy_stress xy_pressure xy_box_tilt total_energy shear_rate" screen no
+fix 		thermo_print all print ${thermo_frequency} "${varstep} ${vartemp} ${vardeformtemp} ${varpress} ${sigmaxy} ${varpxy} ${varxystrain} ${varetotal} ${rate}" append gel_stress_${sigma0}_damp_${damp}_steps_${run_steps}.thermo title "step temperature corrected_temperature pressure xy_stress xy_pressure xy_strain total_energy shear_rate" screen no
 
 # Print file with box dimensions for TCC
 fix		 	box_print all print ${dump_frequency} "${varx} ${vary} ${varz} ${varxy} ${varxz} ${varyz}" file box.txt title "x y z xy xz yz" screen no
