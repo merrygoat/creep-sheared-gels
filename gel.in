@@ -34,6 +34,9 @@ variable varstep equal step
 variable vartemp equal temp
 variable varpress equal press
 variable varetotal equal etotal
+compute  msd all msd
+
+fix		msd all ave/time 1 1 ${thermo_frequency} c_msd[4] file msd.txt
 
 fix thermo_print 	all print ${thermo_frequency} "${varstep} ${vartemp} ${varpress} ${varetotal}" file gel_equil_${run_steps}.thermo screen no
 
