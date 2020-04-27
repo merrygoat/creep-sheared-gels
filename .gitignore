@@ -1,7 +1,10 @@
-
+# LAMMPS files
 morse_input*
 log.lammps
 *.xyz
 *.gz
 *.thermo
+
+# Python files
 .idea/
+/venv
