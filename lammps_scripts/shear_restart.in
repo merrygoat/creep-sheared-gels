@@ -1,4 +1,6 @@
-#Leave this at 1 since beta epsilon is then the morse well depth
+# Script to take an equilibrated gel configuration and shear it
+
+# Set temperature to 1 such that beta epsilon is then the morse well depth
 variable run_temp equal 1
 variable run_steps equal 100000
 variable dump_frames equal 100
@@ -7,9 +9,9 @@ variable morse_well_depth equal 12
 variable dump_frequency equal ${run_steps}/${dump_frames}
 variable thermo_frequency equal ${run_steps}/1000
 
-# read restart file
+# Read restart file
+# Unfortunately interactions are stored in the the restart file for the pair_style hybrid potential so we have to respecify them here.
 read_restart equil_*.restart
-#pair_style	hybrid/overlay morse 1.4 dpd/tstat 1.0 1.0 2.5 34387
 pair_coeff * * dpd/tstat 100 1
 pair_modify	shift yes
 comm_modify vel yes
@@ -42,21 +44,24 @@ pair_coeff 6 6 morse ${morse_well_depth} 33 1.08 1.512
 pair_coeff 6 7 morse ${morse_well_depth} 33 1.1 1.54
 pair_coeff 7 7 morse ${morse_well_depth} 33 1.12 1.568
 
-## Set up Shear
-
+# Set up computes for use in Shear calculations
 compute		deform_temp all temp/deform
 compute		deform_pressure all pressure deform_temp
 
+# Reset the time step from the initial equilibration
 reset_timestep 0
 
+# Stress calculations
 variable sigmaxy equal  -c_deform_pressure[4] #Get the xy stress
 variable sigma0 equal 1.5     # Target stress
 variable damp equal 0.01        # Damping parameter
 
+# Run in NVE
 fix 1 all nve
-# Every step deform the box by v_deform amount at rate v_rate. 
+# At every time step, deform the box by v_deform amount at rate v_rate.
 fix 2 all deform 1 xy variable v_deform v_rate remap x
 
+# Calculate the amount to deform the box based on the measured stress vs the target stress
 variable deform equal f_oldrate*dt+f_old_deform
 variable rate equal f_oldrate+${damp}*(${sigma0}-v_sigmaxy)*dt*ly
 
@@ -64,6 +69,7 @@ variable rate equal f_oldrate+${damp}*(${sigma0}-v_sigmaxy)*dt*ly
 fix     old_deform all ave/time 1 1 1 v_deform
 fix     oldrate all ave/time 1 1 1 v_rate
 
+# All these variables are used for output
 variable varstep equal step
 variable vartemp equal temp
 variable varpress equal press
@@ -79,18 +85,19 @@ variable varyz equal yz
 variable varxystrain equal xy/ly
 
 
-# Print file with thermodynamic quantities
-fix 		thermo_print all print ${thermo_frequency} "${varstep} ${vartemp} ${vardeformtemp} ${varpress} ${sigmaxy} ${varpxy} ${varxystrain} ${varetotal} ${rate}" append gel_stress_${sigma0}_damp_${damp}_steps_${run_steps}.thermo title "step temperature corrected_temperature pressure xy_stress xy_pressure xy_strain total_energy shear_rate" screen no
+# Periodically output thermodynamic data
+fix thermo_print all print ${thermo_frequency} "${varstep} ${vartemp} ${vardeformtemp} ${varpress} ${sigmaxy} ${varpxy} ${varxystrain} ${varetotal} ${rate}" append gel_stress_${sigma0}_damp_${damp}_steps_${run_steps}.thermo title "step temperature corrected_temperature pressure xy_stress xy_pressure xy_strain total_energy shear_rate" screen no
 
-# Print file with box dimensions for TCC
-fix		 	box_print all print ${dump_frequency} "${varx} ${vary} ${varz} ${varxy} ${varxz} ${varyz}" file box.txt title "x y z xy xz yz" screen no
+# Periodically output file with box dimensions for analysis with the Topological Cluster Classification
+fix box_print all print ${dump_frequency} "${varx} ${vary} ${varz} ${varxy} ${varxz} ${varyz}" file box.txt title "x y z xy xz yz" screen no
 
+# This is the thermodynamic data printed to screen as the simulation runs
 thermo ${thermo_frequency}
 thermo_style custom step temp c_deform_temp press pxy xy pe v_rate
 
+# Periodically output particle positions in a zipped atom format
 dump 		dumpatom  all atom ${dump_frequency} gel_stress_${sigma0}_steps_${run_steps}.gz
 dump_modify	dumpatom sort id first yes
 
-## Do production
-
+# Do the simulation
 run ${run_steps}
