@@ -4,7 +4,6 @@
 variable run_temp equal 1
 variable run_steps equal 100000
 variable dump_frames equal 100
-variable morse_well_depth equal 12
 
 variable dump_frequency equal ${run_steps}/${dump_frames}
 variable thermo_frequency equal ${run_steps}/1000
